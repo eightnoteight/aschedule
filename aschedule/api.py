@@ -28,7 +28,7 @@ class AsyncSchedulePlan(object):
     async def run(self, job):
         if self.start_at is not None:
             td = self.start_at - datetime.now()
-            if td > td.resoultion and td.seconds > 0:
+            if td > td.resolution and td.seconds > 0:
                 await asyncio.sleep(td.seconds, loop=self.loop)
             asyncio.ensure_future(job(), loop=self.loop)
 
