@@ -28,10 +28,10 @@ class AsyncSchedulePlan(object):
     async def run(self, job):
         if self.start_at is not None:
             td = self.start_at - datetime.now()
-            if td > td.resolution and td.seconds > 0:
+            if td > timedelta.resolution and td.seconds > 0:
                 await asyncio.sleep(td.seconds, loop=self.loop)
             asyncio.ensure_future(job(), loop=self.loop)
-
+            self.current += 1
         async for _ in self:
             asyncio.ensure_future(job(), loop=self.loop)
 
@@ -46,7 +46,7 @@ def every(job, seconds=0, minutes=0, hours=0,
         async def job():
             for x in xrange()
         shedule.every()
-    :param job: a callable which returns a co-routine or a future or an awaitable
+    :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
     :param seconds: number of seconds, 0...x
     :param minutes: number of minutes, 0...x
     :param hours: number of hours, 0...x
