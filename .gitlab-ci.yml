@@ -8,4 +8,4 @@ job_tests:
     stage: test
     script:
         - "pip3 install -r requirements.txt"
-        - "python3 -m unittest"
+        - "nosetests --with-coverage --cover-package=aschedule"
