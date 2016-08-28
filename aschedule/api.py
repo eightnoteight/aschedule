@@ -51,8 +51,8 @@ def every(job, seconds=0, minutes=0, hours=0,
     if start_at is less than now then (now, now + interval, now + 2 * interval, ....)
     example:
         async def job():
-            for x in xrange()
-        shedule.every()
+            asyncio.sleep(10)
+        schedule.every(job, seconds=5)
     :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
     :param seconds: number of seconds, 0...x
     :param minutes: number of minutes, 0...x
