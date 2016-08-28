@@ -36,6 +36,13 @@ class AsyncSchedulePlan(object):
             asyncio.ensure_future(job(), loop=self.loop)
 
 
+class BadOptions(BaseException):
+    """
+    exception for bad function params
+    """
+    pass
+
+
 def every(job, seconds=0, minutes=0, hours=0,
           days=0, weeks=0, start_at=None, loop=None):
     """
@@ -66,8 +73,13 @@ def every(job, seconds=0, minutes=0, hours=0,
     return asyncio.ensure_future(plan.run(job), loop=loop)
 
 
-class BadOptions(BaseException):
+def at(job, dt: datetime, loop=None):
     """
-    exception for bad function params
+    schedules a job at the given time
+    :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
+    :param dt: datetime object at which the job should be executed once
+    :param loop: event loop if provided will be given to asyncio helper methods
+    :return: future of the schedule, so it could be cancelled at will of the user
     """
-    pass
+    plan = AsyncSchedulePlan(1, loop=loop, count=1, start_at=dt)
+    return asyncio.ensure_future(plan.run(job), loop=loop)

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .api import every
-from .api import AsyncSchedulePlan
+from .api import every, AsyncSchedulePlan, at
 
-__all__ = ['every', 'AsyncSchedulePlan']
+__all__ = ['every', 'AsyncSchedulePlan', 'at']
