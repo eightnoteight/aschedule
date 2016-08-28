@@ -6,7 +6,6 @@ except ImportError:
 version = '0.0.1'
 packages = ['aschedule']
 install_requires = [
-    'nose',
 ]
 
 config = {
