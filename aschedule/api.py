@@ -73,7 +73,7 @@ def every(job, seconds=0, minutes=0, hours=0,
     return asyncio.ensure_future(plan.run(job), loop=loop)
 
 
-def at(job, dt: datetime, loop=None):
+def once_at(job, dt: datetime, loop=None):
     """
     schedules a job at the given time
     :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
