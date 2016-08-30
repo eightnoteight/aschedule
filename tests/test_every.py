@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from concurrent.futures import ThreadPoolExecutor
 import unittest
 import asyncio
 import datetime
