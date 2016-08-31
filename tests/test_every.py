@@ -54,6 +54,22 @@ class TestEveryFunction(unittest.TestCase):
         self.assertAlmostEqual(start_time + interval_in_seconds * self.count_max - interval_in_seconds,
                                end_time, delta=0.1)
 
+    def test_timedelta(self):
+        self.count = 0
+        self.count_max = 5
+        interval_in_seconds = 2
+
+        self.future = aschedule.every(self.sample_job,
+                                      timedelta=datetime.timedelta(seconds=interval_in_seconds))
+        start_time = self.loop.time()
+        # error if: the future doesn't exit or produces other than CancelledError
+        with self.assertRaises(asyncio.CancelledError):
+            self.loop.run_until_complete(future=self.future)
+        end_time = self.loop.time()
+
+        self.assertAlmostEqual(start_time + interval_in_seconds * self.count_max,
+                               end_time, delta=0.1)
+
     def test_loop(self):
         asyncio.set_event_loop(None)
 

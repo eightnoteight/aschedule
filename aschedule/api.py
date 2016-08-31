@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta as _timedelta_cls
 import asyncio
 
 all_schedules = {}
@@ -34,8 +34,8 @@ class AsyncSchedulePlan(object):
     async def run(self, job):
         if self.start_at is not None:
             td = self.start_at - datetime.now()
-            if td > timedelta.resolution and td.seconds > 0:
-                await asyncio.sleep(td.seconds, loop=self.loop)
+            if round(td.total_seconds()) > 0:
+                await asyncio.sleep(round(td.total_seconds()), loop=self.loop)
             fut = asyncio.ensure_future(job(), loop=self.loop)
             self.running_jobs.add(fut)
             fut.add_done_callback(self.job_future_done_callback)
@@ -46,6 +46,7 @@ class AsyncSchedulePlan(object):
             fut.add_done_callback(self.job_future_done_callback)
 
     def cancel(self):
+        # if not converted to list might give concurrent modification error on set's iteration.
         running_jobs = list(self.running_jobs)
         for fut in running_jobs:
             fut.cancel()
@@ -87,8 +88,8 @@ def cancel(future: asyncio.Future):
         raise ScheduleNotFound("Given future doesn't belong to any schedule of aschedule")
 
 
-def every(job, seconds=0, minutes=0, hours=0,
-          days=0, weeks=0, start_at=None, loop=None):
+def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
+          timedelta=None, start_at=None, loop=None):
     """
     default execution schedule is (now + interval, now + 2 * interval, ....)
     if start_at is provided (start, start + interval, start + 2 * interval, ....)
@@ -103,16 +104,21 @@ def every(job, seconds=0, minutes=0, hours=0,
     :param hours: number of hours, 0...x
     :param days: number of days, 0...x
     :param weeks: number of weeks, 0...x
-    :param start_at: datetime at which the schedule starts
-    :param loop: io loop if the provided job is a custom future
+    :param timedelta: the interval can also be given in the format of datetime.timedelta,
+                      then seconds, minutes, hours, days, weeks parameters are ignored.
+    :param start_at: datetime at which the schedule starts if not provided schedule starts at (now + interval)
+    :param loop: io loop if the provided job is a custom future linked up with a different event loop.
     :return: future of the schedule, so it could be cancelled at will of the user
     """
-    minutes, seconds = minutes + (seconds // 60), seconds % 60
-    hours, minutes = hours + (minutes // 60), minutes % 60
-    days, hours = days + (hours // 24), hours % 24
-    interval = timedelta(seconds=seconds, minutes=minutes, hours=hours, days=days, weeks=weeks).seconds
-    if interval == 0:
-        raise BadOptions('given interval(0 seconds) is invalid')
+    if timedelta is None:
+        minutes, seconds = minutes + (seconds // 60), seconds % 60
+        hours, minutes = hours + (minutes // 60), minutes % 60
+        days, hours = days + (hours // 24), hours % 24
+        weeks, days = weeks + (days // 7), days % 7
+        timedelta = _timedelta_cls(seconds=seconds, minutes=minutes, hours=hours, days=days, weeks=weeks)
+    interval = round(timedelta.total_seconds())
+    if interval <= 0:
+        raise BadOptions('given interval is invalid')
     plan = AsyncSchedulePlan(interval, loop=loop, start_at=start_at)
     fut = asyncio.ensure_future(plan.run(job), loop=loop)
     all_schedules[fut] = plan
@@ -124,6 +130,7 @@ def once_at(job, dt: datetime, loop=None):
     schedules a job at the given time
     :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
     :param dt: datetime object at which the job should be executed once
+               even if it is past it will be executed.
     :param loop: event loop if provided will be given to asyncio helper methods
     :return: future of the schedule, so it could be cancelled at will of the user
     """
