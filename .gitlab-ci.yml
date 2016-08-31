@@ -7,5 +7,4 @@ job_tests:
     image: python:3.5.2
     stage: test
     script:
-        - "pip3 install -r requirements.txt"
-        - "nosetests --with-coverage --cover-package=aschedule"
+        - "nosetests --with-coverage --cover-package=aschedule --cover-min-percentage=90 --cover-config-file=.coveragerc"

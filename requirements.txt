@@ -1,2 +1,5 @@
-nose
+
+# nose pkg from github master as latest pypi version doesn't have --cover-config-file option
+# and the last release is in some 2015 june
+https://github.com/nose-devs/nose/archive/master.zip
 coverage

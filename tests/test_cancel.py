@@ -36,6 +36,10 @@ class TestCancel(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(20))
         self.assertEqual(1, self.count, "more than 1 job got executed")
 
+    def test_unknown_cancel(self):
+        with self.assertRaises(aschedule.ScheduleNotFound):
+            aschedule.cancel(asyncio.Future())
+
     def tearDown(self):
         self.loop = None
         self.count = 0
