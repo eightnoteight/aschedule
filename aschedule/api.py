@@ -98,7 +98,8 @@ def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
         async def job():
             asyncio.sleep(10)
         aschedule.every(job, seconds=5)
-    :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
+    :param job: a callable(co-routine function) which returns
+                a co-routine or a future or an awaitable
     :param seconds: number of seconds, 0...x
     :param minutes: number of minutes, 0...x
     :param hours: number of hours, 0...x
@@ -106,8 +107,10 @@ def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
     :param weeks: number of weeks, 0...x
     :param timedelta: the interval can also be given in the format of datetime.timedelta,
                       then seconds, minutes, hours, days, weeks parameters are ignored.
-    :param start_at: datetime at which the schedule starts if not provided schedule starts at (now + interval)
-    :param loop: io loop if the provided job is a custom future linked up with a different event loop.
+    :param start_at: datetime at which the schedule starts if not
+                     provided schedule starts at (now + interval)
+    :param loop: io loop if the provided job is a custom future linked up
+                 with a different event loop.
     :return: future of the schedule, so it could be cancelled at will of the user
     """
     if timedelta is None:
@@ -115,7 +118,8 @@ def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
         hours, minutes = hours + (minutes // 60), minutes % 60
         days, hours = days + (hours // 24), hours % 24
         weeks, days = weeks + (days // 7), days % 7
-        timedelta = _timedelta_cls(seconds=seconds, minutes=minutes, hours=hours, days=days, weeks=weeks)
+        timedelta = _timedelta_cls(seconds=seconds, minutes=minutes, hours=hours,
+                                   days=days, weeks=weeks)
     interval = round(timedelta.total_seconds())
     if interval <= 0:
         raise BadOptions('given interval is invalid')
@@ -128,7 +132,8 @@ def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
 def once_at(job, dt: datetime, loop=None):
     """
     schedules a job at the given time
-    :param job: a callable(co-routine function) which returns a co-routine or a future or an awaitable
+    :param job: a callable(co-routine function) which returns
+                a co-routine or a future or an awaitable
     :param dt: datetime object at which the job should be executed once
                even if it is past it will be executed.
     :param loop: event loop if provided will be given to asyncio helper methods

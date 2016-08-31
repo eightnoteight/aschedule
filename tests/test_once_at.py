@@ -10,6 +10,7 @@ import aschedule
 class TestOnceAt(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.get_event_loop()
+        self.future = None
         self.trigger_time = 0
         self.count = 0
 
@@ -22,7 +23,7 @@ class TestOnceAt(unittest.TestCase):
     def _test_util(self, td, delay):
         scheduled_time = self.loop.time()
         self.future = aschedule.once_at(self.sample_job,
-                                datetime.now() + td)
+                                        datetime.now() + td)
         self.loop.run_until_complete(self.future)
         expected_time = scheduled_time + delay
         self.assertAlmostEqual(expected_time, self.trigger_time, delta=0.1)
