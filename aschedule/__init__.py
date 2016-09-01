@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .api import every, AsyncSchedulePlan, once_at, \
-    cancel, BadOptions, ScheduleNotFound
+from .api import every, once_at, cancel, \
+    JobSchedule, ScheduleManager, AScheduleException
 
-__all__ = ['every', 'AsyncSchedulePlan', 'once_at', 'cancel',
-           'BadOptions', 'ScheduleNotFound']
+__all__ = ['every', 'once_at', 'cancel',
+           'ScheduleManager', 'JobSchedule', 'AScheduleException']

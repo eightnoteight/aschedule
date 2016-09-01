@@ -1,91 +1,108 @@
 # -*- coding: utf-8 -*-
 
+from uuid import uuid4
 from datetime import datetime, timedelta as _timedelta_cls
+from math import ceil
+from functools import partial
+import itertools
 import asyncio
 
-all_schedules = {}
+from .helpers import WaitAsyncIterator
 
 
-class AsyncSchedulePlan(object):
-    def __init__(self, interval, count=float('inf'), loop=None, start_at=None):
+class JobSchedule(object):
+    def __init__(self, get_coro_or_fut, intervals, loop=None):
         """
-        :param interval: the repeating interval in seconds
-        :param count: number of times to execute this task
+        :param get_coro_or_fut: a callable which returns a co-routine object or a future
+                                or an awaitable.
+         :param intervals: an iterator which gives interval times between consecutive
+                           jobs.
+        :param loop: loop passed to asyncio loop
         """
-        self.interval = interval
-        self.count = count
-        self.current = 0
+        self.uuid = uuid4()
+        self.job = get_coro_or_fut
+        self.intervals = intervals
         self.loop = loop
-        self.start_at = start_at
         self.running_jobs = set()
+        self.wait_iter = WaitAsyncIterator(intervals, loop=loop)
+        self.future = asyncio.ensure_future(self._run(), loop=loop)
 
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        if self.current == self.count:
-            raise StopAsyncIteration
-        self.current += 1
-        await asyncio.sleep(self.interval, loop=self.loop)
-
-    def job_future_done_callback(self, future: asyncio.Future):
+    def _job_future_done_callback(self, future: asyncio.Future):
         self.running_jobs.remove(future)
 
-    async def run(self, job):
-        if self.start_at is not None:
-            td = self.start_at - datetime.now()
-            if round(td.total_seconds()) > 0:
-                await asyncio.sleep(round(td.total_seconds()), loop=self.loop)
-            fut = asyncio.ensure_future(job(), loop=self.loop)
-            self.running_jobs.add(fut)
-            fut.add_done_callback(self.job_future_done_callback)
-            self.current += 1
-        async for _ in self:
-            fut = asyncio.ensure_future(job(), loop=self.loop)
-            self.running_jobs.add(fut)
-            fut.add_done_callback(self.job_future_done_callback)
+    async def _run(self):
+        async for _ in self.wait_iter:
+            future = asyncio.ensure_future(self.job(), loop=self.loop)
+            self.running_jobs.add(future)
+            future.add_done_callback(self._job_future_done_callback)
 
-    def cancel(self):
-        # if not converted to list might give concurrent modification error on set's iteration.
-        running_jobs = list(self.running_jobs)
-        for fut in running_jobs:
-            fut.cancel()
+    def cancel(self, running_jobs=False):
+        self.future.cancel()
+        if running_jobs:
+            running_jobs = list(self.running_jobs)
+            for job_future in running_jobs:
+                job_future.cancel()
+
+    def __hash__(self):
+        return hash(self.uuid)
 
 
-class BadOptions(BaseException):
-    """
-    exception for bad function params.
-    """
+class ScheduleManager(object):
+
+    def __init__(self):
+        self.schedules = set()
+
+    def _schedule_done_callback(self, schedule, _):
+        self.schedules.remove(schedule)  # this must never give KeyError as
+
+    def every(self, get_coro_or_fut, interval: _timedelta_cls, start_at: datetime,
+              count=float('inf'), loop=None):
+        diff = start_at - datetime.now()
+        if round(diff.total_seconds()) < 0:
+            start_at += interval * ceil((-diff) / interval)
+        intervals = itertools.chain(
+            iter([round((start_at - datetime.now()).total_seconds())]),
+            map(lambda x: x[1], itertools.takewhile(lambda x: x[0] < count,
+                                                    enumerate(itertools.repeat(round(interval.total_seconds()))))))
+        schedule = JobSchedule(get_coro_or_fut, intervals, loop=loop)
+        self.schedules.add(schedule)
+        schedule.future.add_done_callback(
+            partial(self._schedule_done_callback, schedule))
+        return schedule
+
+    def once_at(self, get_coro_or_fut, run_at: datetime, strict=False, loop=None):
+        diff = run_at - datetime.now()
+        if round(diff.total_seconds()) >= 0 or not strict:
+            intervals = iter([max(round(diff.total_seconds()), 0)])
+            schedule = JobSchedule(get_coro_or_fut, intervals, loop=loop)
+            self.schedules.add(schedule)
+            schedule.future.add_done_callback(self._schedule_done_callback)
+            return schedule
+        else:
+            raise AScheduleException(
+                "the given time({given}) is in past. "
+                "current time is {now}. ".format(given=run_at, now=datetime.now()))
+
+    def cancel(self, schedule: JobSchedule, running_jobs=True):
+        if schedule not in self.schedules:
+            raise AScheduleException("given schedule doesn't belong to this "
+                                     "ScheduleManager instance")
+        schedule.cancel(running_jobs)
+
+    def shutdown(self):
+        for schedule in self.schedules:
+            schedule.cancel()
+
+
+class AScheduleException(Exception):
     pass
 
 
-class ScheduleNotFound(BaseException):
-    """
-    exception if schedule is not found.
-    """
-    pass
+default_schedule_manager = ScheduleManager()
 
 
-def cancel(future: asyncio.Future):
-    """
-    cancel's the schedule and all the currently running jobs of this schedule.
-    usage:
-        async def job():
-            asyncio.sleep(10)
-            print('hi')
-            aschedule.cancel(schedule_future)
-        schedule_future = aschedule.every(job, seconds=2)
-        loop.run_until_complete(schedule_future)
-    :raises ScheduleNotFound
-    :param future: the schedule future created by aschedule.every or aschedule.once_at
-    :return: None
-    """
-    if future in all_schedules:
-        all_schedules[future].cancel()
-        all_schedules.pop(future)
-        future.cancel()
-    else:
-        raise ScheduleNotFound("Given future doesn't belong to any schedule of aschedule")
+def cancel(schedule: JobSchedule, running_jobs=False):
+    default_schedule_manager.cancel(schedule, running_jobs)
 
 
 def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
@@ -100,44 +117,41 @@ def every(job, seconds=0, minutes=0, hours=0, days=0, weeks=0,
         aschedule.every(job, seconds=5)
     :param job: a callable(co-routine function) which returns
                 a co-routine or a future or an awaitable
-    :param seconds: number of seconds, 0...x
-    :param minutes: number of minutes, 0...x
-    :param hours: number of hours, 0...x
+    :param seconds: number of seconds, 0...59
+    :param minutes: number of minutes, 0...59
+    :param hours: number of hours, 0...23
     :param days: number of days, 0...x
     :param weeks: number of weeks, 0...x
     :param timedelta: the interval can also be given in the format of datetime.timedelta,
                       then seconds, minutes, hours, days, weeks parameters are ignored.
     :param start_at: datetime at which the schedule starts if not
-                     provided schedule starts at (now + interval)
+                     provided schedule starts at (now).
     :param loop: io loop if the provided job is a custom future linked up
                  with a different event loop.
     :return: future of the schedule, so it could be cancelled at will of the user
     """
     if timedelta is None:
-        minutes, seconds = minutes + (seconds // 60), seconds % 60
-        hours, minutes = hours + (minutes // 60), minutes % 60
-        days, hours = days + (hours // 24), hours % 24
-        weeks, days = weeks + (days // 7), days % 7
         timedelta = _timedelta_cls(seconds=seconds, minutes=minutes, hours=hours,
                                    days=days, weeks=weeks)
-    interval = round(timedelta.total_seconds())
-    if interval <= 0:
-        raise BadOptions('given interval is invalid')
-    plan = AsyncSchedulePlan(interval, loop=loop, start_at=start_at)
-    fut = asyncio.ensure_future(plan.run(job), loop=loop)
-    all_schedules[fut] = plan
-    return fut
+    if round(timedelta.total_seconds()) <= 0:
+        raise AScheduleException("given interval is invalid i.e "
+                                 "one of seconds, minutes, hours, days, weeks is invalid")
+    if start_at is None:
+        start_at = datetime.now()
+    return default_schedule_manager.every(job, timedelta, start_at, loop=loop)
 
 
-def once_at(job, dt: datetime, loop=None):
+def once_at(job, run_at: datetime, loop=None, strict=False):
     """
     schedules a job at the given time
     :param job: a callable(co-routine function) which returns
                 a co-routine or a future or an awaitable
-    :param dt: datetime object at which the job should be executed once
+    :param run_at: datetime object at which the job should be executed once
                even if it is past it will be executed.
     :param loop: event loop if provided will be given to asyncio helper methods
+    :param strict: if the run_at is in the past this will raise an exception if strict
+                   is True, if strict is False it will assume it to be a pending job
+                   and will schedule it to execute asap.
     :return: future of the schedule, so it could be cancelled at will of the user
     """
-    plan = AsyncSchedulePlan(1, loop=loop, count=1, start_at=dt)
-    return asyncio.ensure_future(plan.run(job), loop=loop)
+    return default_schedule_manager.once_at(job, run_at, strict=strict, loop=loop)

@@ -22,9 +22,9 @@ class TestOnceAt(unittest.TestCase):
 
     def _test_util(self, td, delay):
         scheduled_time = self.loop.time()
-        self.future = aschedule.once_at(self.sample_job,
-                                        datetime.now() + td)
-        self.loop.run_until_complete(self.future)
+        self.schedule = aschedule.once_at(self.sample_job,
+                                          datetime.now() + td)
+        self.loop.run_until_complete(self.schedule.future)
         expected_time = scheduled_time + delay
         self.assertAlmostEqual(expected_time, self.trigger_time, delta=0.1)
 

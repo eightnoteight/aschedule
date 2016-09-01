@@ -1,0 +1,6 @@
+.coverage
+_.py
+.venv/
+dist/
+docs/
+.idea/
