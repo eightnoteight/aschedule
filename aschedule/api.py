@@ -35,6 +35,7 @@ class JobSchedule(object):
             future = asyncio.ensure_future(self.job(), loop=self.loop)
             self.running_jobs.add(future)
             future.add_done_callback(self._job_future_done_callback)
+        await asyncio.gather(*list(self.running_jobs), loop=self.loop)
 
     def cancel(self, running_jobs=False):
         self.future.cancel()
