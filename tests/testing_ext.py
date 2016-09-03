@@ -27,8 +27,8 @@ class TestingExt(unittest.TestCase):
         schedule2 = every_day(self.get_coro, loop=self.loop)
         self.every_mock.assert_called_with(self.get_coro, timedelta=timedelta(days=1), loop=self.loop)
         self.loop.run_until_complete(asyncio.sleep(1))
-        schedule1.cancel(running_jobs=True)
-        schedule2.cancel(running_jobs=True)
+        schedule1._cancel(running_jobs=True)
+        schedule2._cancel(running_jobs=True)
         self.loop.run_until_complete(asyncio.sleep(1))
         self.assertEqual(2, self.every_mock.call_count)
 
@@ -43,8 +43,8 @@ class TestingExt(unittest.TestCase):
         schedule2 = every_week(self.get_coro, loop=self.loop)
         self.every_mock.assert_called_with(self.get_coro, timedelta=timedelta(days=7), loop=self.loop)
         self.loop.run_until_complete(asyncio.sleep(1))
-        schedule1.cancel(running_jobs=True)
-        schedule2.cancel(running_jobs=True)
+        schedule1._cancel(running_jobs=True)
+        schedule2._cancel(running_jobs=True)
         self.loop.run_until_complete(asyncio.sleep(1))
         self.assertEqual(2, self.every_mock.call_count)
 

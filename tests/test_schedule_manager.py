@@ -349,7 +349,7 @@ class TestScheduleManager(unittest.TestCase):
             # schedule manager as the schedule is created by a new schedule manager instance
             with self.assertRaises(aschedule.AScheduleException):
                 self.schedule_manager.cancel(schedule1, running_jobs=True)
-            schedule1.cancel(running_jobs=True)
+            schedule1._cancel(running_jobs=True)
 
         async def cancel_schedule2():
             await asyncio.sleep(cancel_in_seconds2)

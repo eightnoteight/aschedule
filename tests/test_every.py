@@ -20,7 +20,7 @@ class TestEveryFunction(unittest.TestCase):
     async def sample_job(self):
         self.count += 1
         if self.count == self.count_max:
-            self.schedule.cancel()
+            self.schedule._cancel(running_jobs=True)
 
     def test_seconds(self):
         self.schedule = aschedule.every(self.sample_job,

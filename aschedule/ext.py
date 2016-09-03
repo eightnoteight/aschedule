@@ -12,6 +12,20 @@ __all__ = ['every_day', 'every_week', 'every_monday', 'every_tuesday', 'every_we
 
 
 def every_random_interval(job, interval: timedelta, loop=None):
+    """
+    executes the job randomly once in the specified interval.
+    example:
+            run a job every day at random time
+            run a job every hour at random time
+    :param job: a callable(co-routine function) which returns
+                a co-routine or a future or an awaitable
+    :param interval: the interval can also be given in the format of datetime.timedelta,
+                      then seconds, minutes, hours, days, weeks parameters are ignored.
+    :param loop: io loop if the provided job is a custom future linked up
+                 with a different event loop.
+    :return: schedule object, so it could be cancelled at will of the user by
+             aschedule.cancel(schedule)
+    """
     if loop is None:
         loop = asyncio.get_event_loop()
     start = loop.time()

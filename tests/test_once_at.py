@@ -15,11 +15,12 @@ class TestOnceAt(unittest.TestCase):
         self.future = None
         self.trigger_time = 0
         self.count = 0
+        self.schedule = None
 
     async def sample_job(self):
         self.trigger_time = self.loop.time()
         if self.count >= 1:
-            self.future.cancel()
+            self.schedule._cancel(running_jobs=True)
         self.count += 1
 
     def _test_util(self, td, delay):
