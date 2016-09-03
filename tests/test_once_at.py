@@ -29,7 +29,7 @@ class TestOnceAt(unittest.TestCase):
                                           datetime.now() + td)
         self.loop.run_until_complete(self.schedule.future)
         expected_time = scheduled_time + delay
-        self.assertAlmostEqual(expected_time, self.trigger_time, delta=0.1)
+        self.assertAlmostEqual(expected_time, self.trigger_time, places=0)
 
     def test_once_at_after(self):
         self._test_util(timedelta(seconds=10), 10)

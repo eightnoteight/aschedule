@@ -32,7 +32,7 @@ class TestEveryFunction(unittest.TestCase):
         end_time = self.loop.time()
 
         self.assertAlmostEqual(start_time + self.interval_in_seconds * (self.count_max - 1),
-                               end_time, delta=0.1)
+                               end_time, places=0)
 
     def test_start_at_now(self):
         self.schedule = aschedule.every(self.sample_job,
@@ -47,7 +47,7 @@ class TestEveryFunction(unittest.TestCase):
         # error if: given start_at, the job doesn't execute 5 times within 8 seconds.
         self.assertAlmostEqual(start_time +
                                self.interval_in_seconds * (self.count_max - 1),
-                               end_time, delta=0.1)
+                               end_time, places=0)
 
     # should behave the same as test_start_at
     def test_start_at_after(self):
@@ -68,7 +68,7 @@ class TestEveryFunction(unittest.TestCase):
                              self.interval_in_seconds * (self.count_max - 1) +
                              after_in_seconds)
         self.assertAlmostEqual(expected_end_time,
-                               end_time, delta=0.1)
+                               end_time, places=0)
 
     def test_timedelta(self):
         self.schedule = aschedule.every(self.sample_job,
@@ -81,7 +81,7 @@ class TestEveryFunction(unittest.TestCase):
         end_time = self.loop.time()
 
         self.assertAlmostEqual(start_time + self.interval_in_seconds * (self.count_max - 1),
-                               end_time, delta=0.1)
+                               end_time, places=0)
 
     def test_bad_options(self):
         with self.assertRaises(aschedule.api.AScheduleException):
@@ -100,7 +100,7 @@ class TestEveryFunction(unittest.TestCase):
         end_time = self.loop.time()
 
         self.assertAlmostEqual(start_time + self.interval_in_seconds * (self.count_max - 1),
-                               end_time, delta=0.1)
+                               end_time, places=0)
 
         asyncio.set_event_loop(self.loop)
 
