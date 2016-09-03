@@ -8,6 +8,7 @@ import aschedule
 
 
 class TestEveryFunction(unittest.TestCase):
+    _multiprocess_shared_ = True
 
     def setUp(self):
         self.loop = asyncio.get_event_loop()
