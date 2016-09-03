@@ -15,6 +15,10 @@ pages:
     image: python:3.5.2
     script:
         - "make -C docs html"
+        - "mkdir public"
+        - "cp -rv docs/build/html/* public/"
     artifacts:
         paths:
-            - docs/build/html/
+            - public
+    only:
+        - master
