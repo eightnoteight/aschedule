@@ -10,3 +10,11 @@ job_tests:
         - "date"
         - "nosetests --with-coverage --cover-package=aschedule --cover-min-percentage=90 --cover-config-file=.coveragerc --processes=50 --process-timeout=600 --cover-inclusive"
         - "date"
+
+pages:
+    image: python:3.5.2
+    script:
+        - "make -C docs html"
+    artifacts:
+        paths:
+            - docs/build/html/
