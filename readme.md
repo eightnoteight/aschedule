@@ -20,7 +20,6 @@ import asyncio, psutil
 import aschedule
 
 async def print_cpu():
-    # send an email to the users
     print('report', round(loop.time()), ':', psutil.cpu_percent())
 
 schedule = aschedule.every(print_cpu, seconds=1)
