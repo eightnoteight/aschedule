@@ -1,6 +1,6 @@
 # aschedule
 
-[![build status][2]][1] [![coverage][3]][1] [![codacy][5]][4]
+[![build status][2]][1] [![coverage][3]][1] [![codacy][5]][4] [![mitlicence][7]][6]
 
 Python asyncio Job Scheduling.
 
@@ -86,3 +86,5 @@ nosetests --with-coverage --cover-package=aschedule --cover-min-percentage=90 --
 [3]: https://gitlab.com/eightnoteight/aschedule/badges/master/coverage.svg
 [4]: https://www.codacy.com/app/eightnoteight/aschedule
 [5]: https://api.codacy.com/project/badge/Grade/d505fa35e59a4c52937302fc63190487
+[6]: https://gitlab.com/eightnoteight/aschedule/blob/master/license
+[7]: https://img.shields.io/badge/license-MIT-blue.svg
