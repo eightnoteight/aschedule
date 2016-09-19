@@ -1,22 +1,19 @@
 before_script:
-    - "apt-get update -qy"
-    - "apt-get install -y python3-dev python3-pip"
-    - "pip3 install -r requirements.txt"
+    - "date"
+
+after_script:
+    - "date"
 
 job_tests:
     image: python:3.5.2
     stage: test
     script:
-        - "date"
-        - "nosetests --with-coverage --cover-package=aschedule --cover-min-percentage=90 --cover-config-file=.coveragerc --processes=50 --process-timeout=600 --cover-inclusive"
-        - "date"
+        - "bash build_script.sh run_tests"
 
 pages:
     image: python:3.5.2
     script:
-        - "make -C docs html"
-        - "mkdir public"
-        - "cp -rv docs/build/html/* public/"
+        - "bash build_script.sh build_pages"
     artifacts:
         paths:
             - public
